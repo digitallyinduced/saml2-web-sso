@@ -511,7 +511,7 @@ importStatement ::
   (HasCallStack, MonadError String m) =>
   HS.Statement ->
   m (Maybe Statement)
-importStatement (HS.StatementAttribute _) = pure Nothing
+importStatement (HS.StatementAttribute s) = pure (Just (AttributeStatement s))
 importStatement (HS.StatementAuthn st) =
   Just <$> do
     _astAuthnInstant <- importTime $ HS.authnStatementInstant st
@@ -523,13 +523,14 @@ importStatement (HS.StatementAuthn st) =
 importStatement bad = die (Proxy @Statement) bad
 
 exportStatement :: (HasCallStack) => Statement -> HS.Statement
-exportStatement stm =
+exportStatement (AttributeStatement v) = HS.StatementAttribute v
+exportStatement AuthnStatement { _astAuthnInstant = astAuthnInstant, _astSessionIndex = astSessionIndex, _astSessionNotOnOrAfter = astSessionNotOnOrAfter, _astSubjectLocality = astSubjectLocality } =
   HS.StatementAuthn
     HS.AuthnStatement
-      { HS.authnStatementInstant = exportTime $ stm ^. astAuthnInstant,
-        HS.authnStatementSessionIndex = cs . escapeXmlText <$> (stm ^. astSessionIndex),
-        HS.authnStatementSessionNotOnOrAfter = exportTime <$> (stm ^. astSessionNotOnOrAfter),
-        HS.authnStatementSubjectLocality = exportLocality <$> (stm ^. astSubjectLocality),
+      { HS.authnStatementInstant = exportTime $ astAuthnInstant,
+        HS.authnStatementSessionIndex = cs . escapeXmlText <$> astSessionIndex,
+        HS.authnStatementSessionNotOnOrAfter = exportTime <$> astSessionNotOnOrAfter,
+        HS.authnStatementSubjectLocality = exportLocality <$> astSubjectLocality,
         HS.authnStatementContext = HS.AuthnContext Nothing Nothing []
       }
 

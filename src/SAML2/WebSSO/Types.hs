@@ -182,6 +182,7 @@ import qualified SAML2.WebSSO.Types.Email as Email
 import SAML2.WebSSO.Types.TH (deriveJSONOptions)
 import qualified Servant
 import URI.ByteString
+import qualified SAML2.Core.Assertions as HS
 
 -- | Text that needs to be escaped when rendered into XML.  See 'mkXmlText', 'escapeXmlText'.
 -- 'XmlText' must be preferred over 'ST' within this module.  'unsafeFromXmlText' is exported
@@ -676,11 +677,13 @@ data Statement = AuthnStatement -- [1/2.7.2]
     _astSessionNotOnOrAfter :: Maybe Time,
     _astSubjectLocality :: Maybe Locality
   }
+  | AttributeStatement { attributeStatement :: HS.AttributeStatement }
   deriving (Eq, Show, Generic)
 
 -- | (just in case we add other constructors in the future.)
 isAuthnStatement :: Statement -> Bool
 isAuthnStatement AuthnStatement {} = True
+isAuthnStatement _ = False
 
 -- | [1/2.7.2.1]
 data Locality = Locality
