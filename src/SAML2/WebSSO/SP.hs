@@ -324,15 +324,13 @@ checkAssertions missuer (toList -> assertions) uref@(UserRef issuer _) = do
   pure $ AccessGranted uref
 
 checkStatement :: (SP m, MonadJudge m) => Statement -> m ()
-checkStatement stm =
+checkStatement AuthnStatement { _astAuthnInstant = issued, _astSessionNotOnOrAfter = mtimeout } =
   do
-    let issued = stm ^. astAuthnInstant
-        mtimeout = stm ^. astSessionNotOnOrAfter
     checkIsInPast DeniedAuthnStatementIssueInstantNotInPast issued
     forM_ mtimeout $ \endoflife -> do
       now <- getNow
       unless (now `earlier` endoflife) . deny $ DeniedAuthnStatmentExpiredAt endoflife
-
+checkStatement AttributeStatement {} = pure ()
 -- | Check all 'SubjectConfirmation's and 'Subject's in all 'Assertion'.  Deny if not at least one
 -- confirmation has method "bearer".
 checkSubjectConfirmations :: (SP m, SPStore m, MonadJudge m) => [Assertion] -> m ()
